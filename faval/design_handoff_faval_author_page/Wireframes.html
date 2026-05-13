@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>faval — data mapping wireframes</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Kalam:wght@300;400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1a1a1a;
+    --ink-2:#3a3a3a;
+    --muted:#7a7a7a;
+    --paper:#fbfaf7;
+    --line:#cfcdc6;
+    --line-strong:#2a2a2a;
+    --accent:#d65a2a;     /* sketchy orange accent */
+    --accent-2:#3e6dbd;   /* sketchy blue (annotations) */
+    --slot:#f1efe8;
+    --slot-2:#ecebe3;
+  }
+  html, body { margin:0; padding:0; background:#e9e6df; font-family:'Kalam', sans-serif; color:var(--ink); }
+  .wf {
+    width:100%;
+    height:100%;
+    background:var(--paper);
+    /* faint grid */
+    background-image:
+      linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+    background-size: 24px 24px;
+    position:relative;
+    overflow:hidden;
+    font-family:'Kalam', sans-serif;
+    color:var(--ink);
+    box-sizing:border-box;
+  }
+  /* generic primitives */
+  .box {
+    border:1.5px solid var(--line-strong);
+    border-radius:6px;
+    background:var(--slot);
+    box-sizing:border-box;
+  }
+  .box.dashed { border-style:dashed; background:transparent; }
+  .box.filled { background:#1a1a1a; color:#fbfaf7; }
+  .box.tint { background:#e6ecf6; border-color:#2a3a55; }
+  .pill {
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:6px 14px;
+    border:1.5px solid var(--line-strong);
+    border-radius:999px;
+    background:#fff;
+    font-family:'Kalam',sans-serif;
+    font-size:15px;
+  }
+  .pill.dark { background:#1a1a1a; color:#fbfaf7; }
+  .slot-label {
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.04em;
+    color:var(--muted);
+    text-transform:uppercase;
+  }
+  .slot-value {
+    font-family:'Kalam', sans-serif;
+    color:var(--ink-2);
+  }
+  .annotation {
+    position:absolute;
+    font-family:'Caveat', cursive;
+    font-size:20px;
+    color:var(--accent);
+    line-height:1.05;
+    max-width:220px;
+  }
+  .annotation.blue { color:var(--accent-2); }
+  .arrow {
+    position:absolute;
+    pointer-events:none;
+  }
+  .sketch-line {
+    height:2px;
+    background:repeating-linear-gradient(90deg, var(--line-strong) 0 6px, transparent 6px 10px);
+  }
+  .h-rule { height:1.5px; background:var(--line-strong); width:100%; }
+  .v-rule { width:1.5px; background:var(--line-strong); height:100%; }
+  /* image-style placeholder block */
+  .placeholder-block {
+    background:
+      repeating-linear-gradient(135deg, rgba(0,0,0,0.06) 0 8px, transparent 8px 16px),
+      var(--slot);
+    border:1.5px solid var(--line-strong);
+    border-radius:6px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+  }
+  /* faux scribble for body copy */
+  .scribble {
+    background:
+      linear-gradient(transparent 0 6px, var(--ink-2) 6px 8px, transparent 8px 14px),
+      linear-gradient(transparent 14px 20px, var(--ink-2) 20px 22px, transparent 22px 28px),
+      linear-gradient(transparent 28px 34px, var(--ink-2) 34px 36px, transparent 36px 42px),
+      linear-gradient(transparent 42px 48px, var(--ink-2) 48px 50px, transparent 50px 56px);
+    background-size: 100% 56px, 100% 56px, 100% 56px, 90% 56px;
+    background-repeat: repeat-y;
+    opacity:0.5;
+  }
+  .scribble.short { background-size: 100% 56px, 100% 56px, 80% 56px, 0 0; }
+  .scribble.tiny { background-size: 100% 56px, 60% 56px, 0 0, 0 0; }
+  /* numbered badges (rating tiers) */
+  .num-badge {
+    width:22px; height:22px; border-radius:999px;
+    background:#1a1a1a; color:#fff;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono', monospace; font-size:12px; font-weight:700;
+    flex-shrink:0;
+  }
+  .num-badge.gray { background:#7a7a7a; }
+  .num-badge.outline { background:#fbfaf7; color:#1a1a1a; border:1.5px solid #1a1a1a; font-size:10px; }
+  /* slot tag (editable hint) */
+  .slot-tag {
+    display:inline-block;
+    padding:2px 8px;
+    background:#fff8e1;
+    border:1px dashed #b58a1a;
+    color:#7a5b00;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    border-radius:3px;
+  }
+  /* Larger artboard helpers */
+  .col-row { display:flex; gap:24px; }
+  .col { display:flex; flex-direction:column; gap:14px; flex:1; }
+  /* Annotation legend (top-right of each artboard) */
+  .legend {
+    position:absolute;
+    top:18px;
+    right:18px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    background:#fff;
+    padding:6px 10px;
+    border:1px solid var(--line);
+    border-radius:4px;
+  }
+  /* Slot — the editable data label */
+  .slot {
+    background:#fff8e1;
+    border:1.5px dashed #b58a1a;
+    border-radius:4px;
+    padding:6px 10px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:#5a4400;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+  }
+  .slot::before {
+    content:'◆';
+    color:#b58a1a;
+    font-size:10px;
+  }
+  .slot.lg { font-size:16px; padding:10px 14px; }
+  .slot.sm { font-size:10px; padding:3px 6px; }
+  .slot.muted {
+    background:transparent;
+    border:1.5px dashed var(--muted);
+    color:var(--muted);
+  }
+  .slot.muted::before { color:var(--muted); }
+  /* Big bold sketchy title */
+  .wire-title {
+    font-family:'Kalam', sans-serif;
+    font-weight:700;
+    color:var(--ink);
+    line-height:1.05;
+  }
+</style>
+</head>
+<body>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="wireframes.jsx"></script>
+</body>
+</html>
