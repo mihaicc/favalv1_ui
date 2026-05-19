@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { fetchAuthorTraits } from '../api'
-import { toSlug, parseAssessment } from '../utils'
+import { fetchAuthorTraits, searchAuthors } from '../api'
+import { toSlug } from '../utils'
 
 function SearchIcon() {
   return (
@@ -44,16 +44,32 @@ function Header() {
   )
 }
 
-function AuthorSearch({ authors }) {
+function AuthorSearch({ fallbackAuthors = [] }) {
   const [query, setQuery] = useState('')
+  const [results, setResults] = useState([])
   const [open, setOpen] = useState(false)
   const [highlighted, setHighlighted] = useState(-1)
   const navigate = useNavigate()
   const inputRef = useRef(null)
+  const debounceRef = useRef(null)
 
-  const filtered = query.trim().length > 0
-    ? authors.filter(a => a.toLowerCase().includes(query.toLowerCase())).slice(0, 8)
-    : []
+  useEffect(() => {
+    const q = query.trim()
+    if (!q) { setResults([]); return }
+    clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      searchAuthors(q)
+        .then(names => { setResults(names); setOpen(true) })
+        .catch(() => {
+          const local = fallbackAuthors
+            .filter(a => a.toLowerCase().includes(q.toLowerCase()))
+            .slice(0, 10)
+          setResults(local)
+          setOpen(true)
+        })
+    }, 200)
+    return () => clearTimeout(debounceRef.current)
+  }, [query, fallbackAuthors])
 
   function go(name) {
     navigate(`/authors/${toSlug(name)}`)
@@ -62,14 +78,14 @@ function AuthorSearch({ authors }) {
   function handleKey(e) {
     if (e.key === 'ArrowDown') {
       e.preventDefault()
-      setHighlighted(h => Math.min(h + 1, filtered.length - 1))
+      setHighlighted(h => Math.min(h + 1, results.length - 1))
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
       setHighlighted(h => Math.max(h - 1, 0))
     } else if (e.key === 'Enter') {
       e.preventDefault()
-      if (highlighted >= 0 && filtered[highlighted]) go(filtered[highlighted])
-      else if (filtered.length > 0) go(filtered[0])
+      if (highlighted >= 0 && results[highlighted]) go(results[highlighted])
+      else if (results.length > 0) go(results[0])
     } else if (e.key === 'Escape') {
       setOpen(false)
     }
@@ -84,20 +100,20 @@ function AuthorSearch({ authors }) {
           type="text"
           placeholder="Search for an author…"
           value={query}
-          onChange={e => { setQuery(e.target.value); setOpen(true); setHighlighted(-1) }}
-          onFocus={() => setOpen(true)}
+          onChange={e => { setQuery(e.target.value); setHighlighted(-1) }}
+          onFocus={() => { if (results.length) setOpen(true) }}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
           onKeyDown={handleKey}
           autoComplete="off"
           spellCheck={false}
         />
         {query && (
-          <button className="clear-btn" onClick={() => { setQuery(''); inputRef.current?.focus() }}>✕</button>
+          <button className="clear-btn" onClick={() => { setQuery(''); setResults([]); inputRef.current?.focus() }}>✕</button>
         )}
       </div>
-      {open && filtered.length > 0 && (
+      {open && results.length > 0 && (
         <ul className="search-dropdown">
-          {filtered.map((name, i) => (
+          {results.map((name, i) => (
             <li
               key={name}
               className={i === highlighted ? 'active' : ''}
@@ -122,20 +138,9 @@ function LatestAuthors({ latest, totalCount }) {
       </div>
       <div className="latest-list">
         {latest.map((a, i) => {
-          const parsed = parseAssessment(a.assessment)
-          const date = a.assessed_at
-            ? new Date(a.assessed_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-            : null
           return (
             <Link key={a.author} to={`/authors/${toSlug(a.author)}`} className="latest-row">
-              <span className="latest-num">{String(i + 1).padStart(2, '0')}</span>
               <span className="latest-name">{a.author}</span>
-              {parsed.avgScore != null && (
-                <span className="latest-score" style={{ color: parsed.avgScore >= 0 ? 'var(--green-700)' : '#c0392b' }}>
-                  {parsed.avgScore > 0 ? '+' : ''}{parsed.avgScore.toFixed(1)}
-                </span>
-              )}
-              {date && <span className="latest-date">{date}</span>}
             </Link>
           )
         })}
@@ -171,17 +176,7 @@ export default function HomePage() {
         <p className="home-sub">
           Search any public intellectual, politician, or commentator to see how their statements hold up.
         </p>
-        {loading
-          ? (
-            <div className="author-search">
-              <div className="search-field">
-                <span className="pulse" style={{ flexShrink: 0 }} />
-                <span style={{ fontSize: 15, color: 'var(--muted)' }}>Loading authors…</span>
-              </div>
-            </div>
-          )
-          : <AuthorSearch authors={authorNames} />
-        }
+        <AuthorSearch fallbackAuthors={authorNames} />
       </section>
       {!loading && latest.length > 0 && (
         <LatestAuthors latest={latest} totalCount={authorNames.length} />

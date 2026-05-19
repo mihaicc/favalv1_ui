@@ -13,3 +13,7 @@ export async function fetchQuotes() {
 export async function fetchAuthorTraits() {
   return get('/api/author-traits/')
 }
+
+export async function searchAuthors(q) {
+  return get(`/api/authors/autocomplete/?q=${encodeURIComponent(q)}`)
+}
