@@ -1,12 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import AuthorPage from './pages/AuthorPage'
+import HomePage from './pages/HomePage'
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<HomePage />} />
         <Route path="/authors/:slug" element={<AuthorPage />} />
-        <Route path="*" element={<Navigate to="/authors/unknown" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   )
