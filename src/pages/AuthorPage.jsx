@@ -54,7 +54,7 @@ function Breadcrumb({ authorName }) {
       <span className="sep">/</span>
       <a href="#">Ranking</a>
       <span className="sep">/</span>
-      <span>{authorName ?? 'Author'}</span>
+      <span>{authorName ?? 'Public figure'}</span>
     </nav>
   )
 }
@@ -364,7 +364,7 @@ export default function AuthorPage() {
   if (quotesStatus === 'idle' && !authorName) {
     return (
       <div style={{ padding: '80px 40px', textAlign: 'center', color: 'var(--ink-3)', fontFamily: 'IBM Plex Sans' }}>
-        Author not found.
+        Public figure not found.
       </div>
     )
   }

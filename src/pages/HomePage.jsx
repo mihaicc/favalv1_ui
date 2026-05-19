@@ -98,7 +98,7 @@ function AuthorSearch({ fallbackAuthors = [] }) {
         <input
           ref={inputRef}
           type="text"
-          placeholder="Search for an author…"
+          placeholder="Search for a public figure…"
           value={query}
           onChange={e => { setQuery(e.target.value); setHighlighted(-1) }}
           onFocus={() => { if (results.length) setOpen(true) }}
@@ -134,7 +134,7 @@ function LatestAuthors({ latest, totalCount }) {
     <section className="latest-authors shell">
       <div className="section-head">
         <h2>Recently assessed</h2>
-        <span className="count">{totalCount} authors total</span>
+        <span className="count">{totalCount} public figures total</span>
       </div>
       <div className="latest-list">
         {latest.map((a, i) => {
@@ -172,7 +172,7 @@ export default function HomePage() {
       <Header />
       <section className="home-hero shell">
         <div className="home-eyebrow">Factual Value</div>
-        <h1 className="home-title">Explore author<br />credibility scores</h1>
+        <h1 className="home-title">Explore a public figure's<br />credibility scores</h1>
         <p className="home-sub">
           Search any public intellectual, politician, or commentator to see how their statements hold up.
         </p>
