@@ -17,3 +17,17 @@ export async function fetchAuthorTraits() {
 export async function searchAuthors(q) {
   return get(`/api/authors/autocomplete/?q=${encodeURIComponent(q)}`)
 }
+
+export async function fetchAuthorFeeds() {
+  return get('/api/author-feeds/')
+}
+
+export async function voteForAuthorFeed(authorName) {
+  const res = await fetch(`${BASE}/api/author-feeds/vote/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ author_name: authorName }),
+  })
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+  return res.json()
+}
