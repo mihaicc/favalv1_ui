@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, NavLink } from 'react-router-dom'
 
 import { fetchAuthorTraits, searchAuthors } from '../api'
 import { toSlug } from '../utils'
@@ -31,8 +31,8 @@ function Header() {
           <img className="wordmark" src="/faval-wordmark.svg" alt="Faval.ai" />
         </div>
         <nav className="primary">
-          <a href="#" className="active">Ranking</a>
-          <a href="#" style={{position:'relative'}}>Quote Stream <span style={{fontSize:'9px',fontWeight:600,letterSpacing:'.4px',textTransform:'uppercase',background:'#e8f5f0',color:'#0F6E56',border:'1px solid #b6ddd1',borderRadius:'20px',padding:'1px 6px',verticalAlign:'middle',whiteSpace:'nowrap'}}>to come</span></a>
+          <NavLink to="/" end>Ranking</NavLink>
+          <NavLink to="/quote-stream">Quote Stream</NavLink>
           <Link to="/donate-suggest">Donate &amp; Suggest</Link>
           <Link to="/about">About</Link>
         </nav>
