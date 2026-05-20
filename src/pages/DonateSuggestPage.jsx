@@ -1,18 +1,14 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { fetchAuthorFeeds, voteForAuthorFeed } from '../api'
+import { Link, useSearchParams } from 'react-router-dom'
+import { fetchAuthorFeeds, voteForAuthorFeed, createDonationCheckout, fetchDonationSession } from '../api'
 
 function Header() {
   return (
     <header className="site">
       <div className="shell row">
         <div className="brand">
-          <Link to="/">
-            <img className="mark" src="/logo.svg" alt="" />
-          </Link>
-          <Link to="/">
-            <img className="wordmark" src="/faval-wordmark.svg" alt="Faval.AI" />
-          </Link>
+          <Link to="/"><img className="mark" src="/logo.svg" alt="" /></Link>
+          <Link to="/"><img className="wordmark" src="/faval-wordmark.svg" alt="Faval.AI" /></Link>
         </div>
         <nav className="primary">
           <Link to="/">Ranking</Link>
@@ -25,15 +21,6 @@ function Header() {
   )
 }
 
-function CoinIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M14.5 9a2.5 2.5 0 0 0-5 0v6a2.5 2.5 0 0 0 5 0" />
-    </svg>
-  )
-}
-
 function VoteIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -42,57 +29,145 @@ function VoteIcon() {
   )
 }
 
-export default function DonateSuggestPage() {
-  const [feeds, setFeeds] = useState([])
+const AMOUNTS = [1, 5, 10, 20]
+
+// ── Post-payment panel ────────────────────────────────────────────────
+
+function VotePanel({ sessionId, feeds, setFeeds }) {
+  const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
   const [suggestion, setSuggestion] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [submitted, setSubmitted] = useState(null)
-  const [votingId, setVotingId] = useState(null)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    fetchAuthorFeeds()
-      .then(setFeeds)
-      .catch(() => {})
+    fetchDonationSession(sessionId)
+      .then(setSession)
+      .catch(() => setError('Could not load your donation session.'))
       .finally(() => setLoading(false))
-  }, [])
+  }, [sessionId])
 
-  async function handleSuggest(e) {
-    e.preventDefault()
-    const name = suggestion.trim()
-    if (!name) return
+  async function handleVote(authorName) {
+    if (!authorName.trim()) return
     setSubmitting(true)
+    setError(null)
     try {
-      const updated = await voteForAuthorFeed(name)
+      const updated = await voteForAuthorFeed(authorName.trim(), sessionId)
       setFeeds(prev => {
         const idx = prev.findIndex(f => f.author_name === updated.author_name)
-        if (idx >= 0) {
-          const next = [...prev]
-          next[idx] = updated
-          return next.sort((a, b) => b.total_votes - a.total_votes)
-        }
-        return [updated, ...prev].sort((a, b) => b.total_votes - a.total_votes)
+        const next = idx >= 0
+          ? prev.map((f, i) => i === idx ? updated : f)
+          : [updated, ...prev]
+        return next.sort((a, b) => b.total_votes - a.total_votes)
       })
-      setSubmitted(name)
+      setSession(s => ({ ...s, votes_remaining: s.votes_remaining - 1, votes_used: s.votes_used + 1 }))
       setSuggestion('')
-    } catch {
-      // silently fail — vote endpoint not yet wired in this env
+    } catch (e) {
+      setError(e.message)
     } finally {
       setSubmitting(false)
     }
   }
 
-  async function handleVote(authorName, feedId) {
+  if (loading) return <div style={{padding:'24px 0', color:'var(--ink-3)'}}>Loading your votes…</div>
+  if (error && !session) return <div style={{padding:'24px 0', color:'var(--gold)'}}>{error}</div>
+
+  return (
+    <div style={{background:'var(--surface)', border:'1px solid var(--green-500)', borderRadius:'14px', padding:'28px 32px', marginBottom:'48px', maxWidth:'600px'}}>
+      <p className="home-eyebrow" style={{marginBottom:'8px'}}>Thank you for donating!</p>
+      <h2 style={{fontFamily:"'Source Serif 4', serif", fontSize:'26px', fontWeight:600, color:'var(--green-900)', marginBottom:'6px'}}>
+        You have {session.votes_remaining} vote{session.votes_remaining !== 1 ? 's' : ''} remaining
+      </h2>
+      <p style={{fontSize:'14px', color:'var(--ink-3)', marginBottom:'24px'}}>
+        {session.votes_used} of {session.votes_total} used · Nominate a public figure below or upvote one from the list.
+      </p>
+
+      {session.votes_remaining > 0 ? (
+        <form
+          onSubmit={e => { e.preventDefault(); handleVote(suggestion) }}
+          style={{display:'flex', gap:'10px'}}
+        >
+          <div className="search-field" style={{flex:1, borderRadius:'10px'}}>
+            <input
+              type="text"
+              placeholder="Name a public figure to track…"
+              value={suggestion}
+              onChange={e => setSuggestion(e.target.value)}
+              disabled={submitting}
+            />
+          </div>
+          <button
+            type="submit"
+            className="btn"
+            disabled={!suggestion.trim() || submitting}
+            style={{
+              borderRadius:'10px', padding:'0 22px',
+              background: suggestion.trim() ? 'var(--green-700)' : undefined,
+              color: suggestion.trim() ? '#fff' : undefined,
+              borderColor: suggestion.trim() ? 'var(--green-700)' : undefined,
+            }}
+          >
+            {submitting ? 'Voting…' : 'Cast vote'}
+          </button>
+        </form>
+      ) : (
+        <p style={{fontSize:'14px', color:'var(--ink-3)'}}>All votes used — donate again to get more.</p>
+      )}
+
+      {error && <p style={{marginTop:'10px', fontSize:'13px', color:'var(--gold)'}}>{error}</p>}
+    </div>
+  )
+}
+
+// ── Main page ─────────────────────────────────────────────────────────
+
+export default function DonateSuggestPage() {
+  const [searchParams] = useSearchParams()
+  const sessionId = searchParams.get('session_id')
+
+  const [feeds, setFeeds] = useState([])
+  const [feedsLoading, setFeedsLoading] = useState(true)
+
+  const [amount, setAmount] = useState(5)
+  const [customAmount, setCustomAmount] = useState('')
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const [checkoutError, setCheckoutError] = useState(null)
+
+  const [votingId, setVotingId] = useState(null)
+
+  const effectiveAmount = customAmount ? parseInt(customAmount, 10) : amount
+
+  useEffect(() => {
+    fetchAuthorFeeds()
+      .then(setFeeds)
+      .catch(() => {})
+      .finally(() => setFeedsLoading(false))
+  }, [])
+
+  async function handleDonate() {
+    if (!effectiveAmount || effectiveAmount < 1) return
+    setCheckoutLoading(true)
+    setCheckoutError(null)
+    try {
+      const { checkout_url } = await createDonationCheckout(effectiveAmount)
+      window.location.href = checkout_url
+    } catch (e) {
+      setCheckoutError('Could not start checkout. Please try again.')
+      setCheckoutLoading(false)
+    }
+  }
+
+  async function handleLeaderboardVote(authorName, feedId) {
+    // Free upvote from the leaderboard (no session required)
     setVotingId(feedId)
     try {
       const updated = await voteForAuthorFeed(authorName)
       setFeeds(prev =>
-        prev
-          .map(f => (f.author_name === updated.author_name ? updated : f))
-          .sort((a, b) => b.total_votes - a.total_votes)
+        prev.map(f => f.author_name === updated.author_name ? updated : f)
+            .sort((a, b) => b.total_votes - a.total_votes)
       )
     } catch {
-      // silently fail
+      // silently ignore
     } finally {
       setVotingId(null)
     }
@@ -104,83 +179,123 @@ export default function DonateSuggestPage() {
       <main>
         <div className="shell">
 
-          {/* ── Hero ── */}
-          <section style={{paddingTop:'72px', paddingBottom:'64px', maxWidth:'680px'}}>
-            <p className="home-eyebrow">Community</p>
-            <h1 style={{fontFamily:"'Source Serif 4', serif", fontSize:'clamp(40px, 5vw, 64px)', fontWeight:600, lineHeight:1.06, letterSpacing:'-0.015em', color:'var(--green-900)', marginBottom:'20px', textWrap:'balance'}}>
-              Help us track the next public figure
-            </h1>
-            <p style={{fontSize:'18px', lineHeight:1.6, color:'var(--ink-3)', marginBottom:'36px', maxWidth:'560px'}}>
-              For every euro donated, you receive one weighted vote to nominate a public figure for tracking. The figures with the most votes get added next.
-            </p>
-
-            {/* Mechanic cards */}
-            <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:'14px', marginBottom:'48px'}}>
-              {[
-                { step: '01', label: 'Donate', desc: '1 € = 1 vote. Payment integration coming soon.' },
-                { step: '02', label: 'Nominate', desc: 'Submit any public figure below — or upvote one already suggested.' },
-                { step: '03', label: 'We track', desc: 'Top-voted figures get added to the ranking feed.' },
-              ].map(({ step, label, desc }) => (
-                <div key={step} style={{background:'var(--surface)', border:'1px solid var(--line)', borderRadius:'12px', padding:'20px'}}>
-                  <span style={{fontFamily:"'JetBrains Mono', monospace", fontSize:'10px', textTransform:'uppercase', letterSpacing:'.1em', color:'var(--green-500)', display:'block', marginBottom:'8px'}}>{step}</span>
-                  <strong style={{fontSize:'15px', color:'var(--ink)', display:'block', marginBottom:'6px'}}>{label}</strong>
-                  <p style={{fontSize:'13px', color:'var(--ink-3)', lineHeight:1.5}}>{desc}</p>
-                </div>
-              ))}
+          {/* ── Success: vote panel ── */}
+          {sessionId && (
+            <div style={{paddingTop:'48px'}}>
+              <VotePanel sessionId={sessionId} feeds={feeds} setFeeds={setFeeds} />
             </div>
+          )}
 
-            {/* Suggest form */}
-            <form onSubmit={handleSuggest} style={{display:'flex', gap:'10px', maxWidth:'520px'}}>
-              <div className="search-field" style={{flex:1, borderRadius:'10px'}}>
-                <CoinIcon />
-                <input
-                  type="text"
-                  placeholder="Suggest a public figure…"
-                  value={suggestion}
-                  onChange={e => { setSuggestion(e.target.value); setSubmitted(null) }}
-                  disabled={submitting}
-                />
-              </div>
-              <button
-                type="submit"
-                className="btn"
-                disabled={!suggestion.trim() || submitting}
-                style={{borderRadius:'10px', padding:'0 22px', background: suggestion.trim() ? 'var(--green-700)' : undefined, color: suggestion.trim() ? '#fff' : undefined, borderColor: suggestion.trim() ? 'var(--green-700)' : undefined}}
-              >
-                {submitting ? 'Submitting…' : 'Suggest'}
-              </button>
-            </form>
-            {submitted && (
-              <p style={{marginTop:'12px', fontSize:'13.5px', color:'var(--green-700)'}}>
-                Suggestion recorded for <strong>{submitted}</strong>. Payment integration will link donations to votes shortly.
+          {/* ── Hero + donation form ── */}
+          {!sessionId && (
+            <section style={{paddingTop:'72px', paddingBottom:'64px', maxWidth:'680px'}}>
+              <p className="home-eyebrow">Community</p>
+              <h1 style={{fontFamily:"'Source Serif 4', serif", fontSize:'clamp(40px, 5vw, 64px)', fontWeight:600, lineHeight:1.06, letterSpacing:'-0.015em', color:'var(--green-900)', marginBottom:'20px', textWrap:'balance'}}>
+                Help us track the next public figure
+              </h1>
+              <p style={{fontSize:'18px', lineHeight:1.6, color:'var(--ink-3)', marginBottom:'40px', maxWidth:'560px'}}>
+                Every €1 donated gives you one weighted vote. The figures with the most votes get added to the ranking next.
               </p>
-            )}
-          </section>
+
+              {/* Amount picker */}
+              <div style={{marginBottom:'16px'}}>
+                <p style={{fontFamily:"'JetBrains Mono', monospace", fontSize:'11px', textTransform:'uppercase', letterSpacing:'.1em', color:'var(--green-700)', marginBottom:'12px'}}>Choose amount</p>
+                <div style={{display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'12px'}}>
+                  {AMOUNTS.map(a => (
+                    <button
+                      key={a}
+                      onClick={() => { setAmount(a); setCustomAmount('') }}
+                      className="btn"
+                      style={{
+                        minWidth:'64px',
+                        background: amount === a && !customAmount ? 'var(--green-700)' : undefined,
+                        color: amount === a && !customAmount ? '#fff' : undefined,
+                        borderColor: amount === a && !customAmount ? 'var(--green-700)' : undefined,
+                      }}
+                    >
+                      €{a}
+                    </button>
+                  ))}
+                  <div className="search-field" style={{borderRadius:'10px', padding:'7px 14px', width:'120px'}}>
+                    <span style={{color:'var(--ink-3)', fontSize:'14px'}}>€</span>
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="Other"
+                      value={customAmount}
+                      onChange={e => setCustomAmount(e.target.value)}
+                      style={{width:'100%'}}
+                    />
+                  </div>
+                </div>
+
+                {effectiveAmount >= 1 && (
+                  <p style={{fontSize:'13px', color:'var(--ink-3)', marginBottom:'20px'}}>
+                    €{effectiveAmount} = <strong style={{color:'var(--green-700)'}}>{effectiveAmount} vote{effectiveAmount !== 1 ? 's' : ''}</strong> to allocate after payment
+                  </p>
+                )}
+
+                <button
+                  className="btn"
+                  onClick={handleDonate}
+                  disabled={!effectiveAmount || effectiveAmount < 1 || checkoutLoading}
+                  style={{
+                    borderRadius:'10px', padding:'12px 28px', fontSize:'15px',
+                    background:'var(--green-700)', color:'#fff', borderColor:'var(--green-700)',
+                  }}
+                >
+                  {checkoutLoading ? 'Redirecting…' : `Donate €${effectiveAmount || '—'} with Stripe Link`}
+                </button>
+
+                {checkoutError && (
+                  <p style={{marginTop:'10px', fontSize:'13px', color:'var(--gold)'}}>{checkoutError}</p>
+                )}
+              </div>
+
+              {/* How it works */}
+              <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:'14px', marginTop:'40px'}}>
+                {[
+                  { step:'01', label:'Donate', desc:'Pay via Stripe Link — card or saved wallet, one click.' },
+                  { step:'02', label:'Nominate', desc:'After payment you\'re redirected back with votes to spend.' },
+                  { step:'03', label:'We track', desc:'Top-voted figures are added to the ranking feed.' },
+                ].map(({ step, label, desc }) => (
+                  <div key={step} style={{background:'var(--surface)', border:'1px solid var(--line)', borderRadius:'12px', padding:'20px'}}>
+                    <span style={{fontFamily:"'JetBrains Mono', monospace", fontSize:'10px', textTransform:'uppercase', letterSpacing:'.1em', color:'var(--green-500)', display:'block', marginBottom:'8px'}}>{step}</span>
+                    <strong style={{fontSize:'15px', color:'var(--ink)', display:'block', marginBottom:'6px'}}>{label}</strong>
+                    <p style={{fontSize:'13px', color:'var(--ink-3)', lineHeight:1.5}}>{desc}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* ── Leaderboard ── */}
           <section style={{paddingBottom:'96px'}}>
             <div className="section-head">
-              <h2>Current suggestions</h2>
+              <h2>{sessionId ? 'Or upvote an existing suggestion' : 'Current suggestions'}</h2>
               <span className="count">
                 <span className="pulse" />
-                {loading ? '—' : feeds.length} nominated
+                {feedsLoading ? '—' : feeds.length} nominated
               </span>
             </div>
 
-            {loading && (
+            {feedsLoading && (
               <div style={{display:'flex', flexDirection:'column', gap:'10px', marginTop:'8px'}}>
                 {[1,2,3].map(i => <span key={i} className="skel w-90" style={{height:'60px', borderRadius:'10px'}} />)}
               </div>
             )}
 
-            {!loading && feeds.length === 0 && (
+            {!feedsLoading && feeds.length === 0 && (
               <p style={{color:'var(--ink-3)', fontSize:'15px', paddingTop:'8px'}}>No suggestions yet — be the first.</p>
             )}
 
-            {!loading && feeds.length > 0 && (
+            {!feedsLoading && feeds.length > 0 && (
               <div style={{display:'flex', flexDirection:'column', gap:'10px', marginTop:'8px'}}>
                 {feeds.map((feed, idx) => (
-                  <div key={feed.id ?? feed.author_name} style={{display:'grid', gridTemplateColumns:'40px 1fr auto', gap:'20px', alignItems:'center', background:'var(--surface)', border:'1px solid var(--line)', borderRadius:'12px', padding:'18px 24px', transition:'border-color 160ms ease'}}>
+                  <div
+                    key={feed.id ?? feed.author_name}
+                    style={{display:'grid', gridTemplateColumns:'40px 1fr auto', gap:'20px', alignItems:'center', background:'var(--surface)', border:'1px solid var(--line)', borderRadius:'12px', padding:'18px 24px'}}
+                  >
                     <span style={{fontFamily:"'JetBrains Mono', monospace", fontSize:'13px', color:'var(--ink-3)', letterSpacing:'.04em'}}>#{idx + 1}</span>
                     <div>
                       <span style={{fontSize:'15px', fontWeight:500, color:'var(--ink)'}}>{feed.author_name}</span>
@@ -195,7 +310,7 @@ export default function DonateSuggestPage() {
                         className="btn"
                         style={{padding:'5px 12px', fontSize:'12px', display:'flex', alignItems:'center', gap:'4px'}}
                         disabled={votingId === (feed.id ?? feed.author_name)}
-                        onClick={() => handleVote(feed.author_name, feed.id ?? feed.author_name)}
+                        onClick={() => handleLeaderboardVote(feed.author_name, feed.id ?? feed.author_name)}
                       >
                         <VoteIcon /> Vote
                       </button>

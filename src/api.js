@@ -22,12 +22,26 @@ export async function fetchAuthorFeeds() {
   return get('/api/author-feeds/')
 }
 
-export async function voteForAuthorFeed(authorName) {
+export async function voteForAuthorFeed(authorName, sessionId = null) {
   const res = await fetch(`${BASE}/api/author-feeds/vote/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ author_name: authorName }),
+    body: JSON.stringify({ author_name: authorName, ...(sessionId && { session_id: sessionId }) }),
   })
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
   return res.json()
+}
+
+export async function createDonationCheckout(amountEur) {
+  const res = await fetch(`${BASE}/api/donations/checkout/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount_eur: amountEur }),
+  })
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+  return res.json()
+}
+
+export async function fetchDonationSession(sessionId) {
+  return get(`/api/donations/session/${sessionId}/`)
 }
