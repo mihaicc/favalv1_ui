@@ -704,6 +704,130 @@ section.quotes {
   color: var(--ink-2);
 }
 
+/* ── Quote Stream page ─────────────────────────────────────────── */
+.stream-hero {
+  padding-top: 64px;
+  padding-bottom: 48px;
+}
+
+.stream-title {
+  font-family: 'Source Serif 4', serif;
+  font-size: clamp(40px, 5vw, 64px);
+  font-weight: 600;
+  line-height: 1.06;
+  letter-spacing: -0.015em;
+  color: var(--green-900);
+  margin-bottom: 16px;
+}
+
+.stream-sub {
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--ink-3);
+  max-width: 480px;
+  margin-bottom: 24px;
+}
+
+.stream-live-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stream-live-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--green-700);
+}
+
+.stream-feed {
+  padding-bottom: 96px;
+}
+
+.stream-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.stream-card:hover {
+  border-color: var(--green-300);
+  transform: translateY(-1px);
+}
+
+.stream-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.stream-author {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--green-700);
+  transition: color 120ms ease;
+}
+
+.stream-author:hover {
+  color: var(--green-900);
+  text-decoration: underline;
+}
+
+.stream-date-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  background: var(--surface-tint);
+  color: var(--green-700);
+  padding: 3px 10px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.stream-quote {
+  font-family: 'Source Serif 4', serif;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.38;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+  text-wrap: pretty;
+}
+
+.stream-quote::before {
+  content: '\201C';
+  font-size: 40px;
+  color: var(--green-300);
+  line-height: 0;
+  vertical-align: -0.4em;
+  margin-right: 2px;
+}
+
+.stream-card-footer {
+  display: flex;
+  align-items: center;
+}
+
+.stream-source {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--ink-2);
+  transition: color 120ms ease;
+}
+
+.stream-source:hover {
+  color: var(--green-700);
+}
+
 /* ── Responsive ────────────────────────────────────────────────────── */
 @media (max-width: 1000px) {
   .hero {
