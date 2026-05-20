@@ -1,23 +1,5 @@
 import { Link } from 'react-router-dom'
-
-function Header() {
-  return (
-    <header className="site">
-      <div className="shell row">
-        <div className="brand">
-          <img className="mark" src="/logo.svg" alt="" />
-          <img className="wordmark" src="/faval-wordmark.svg" alt="Faval.ai" />
-        </div>
-        <nav className="primary">
-          <Link to="/">Ranking</Link>
-          <a href="#" style={{position:'relative'}}>Quote Stream <span style={{fontSize:'9px',fontWeight:600,letterSpacing:'.4px',textTransform:'uppercase',background:'#e8f5f0',color:'#0F6E56',border:'1px solid #b6ddd1',borderRadius:'20px',padding:'1px 6px',verticalAlign:'middle',whiteSpace:'nowrap'}}>to come</span></a>
-          <Link to="/donate-suggest">Donate &amp; Suggest</Link>
-          <Link to="/about" className="active">About</Link>
-        </nav>
-      </div>
-    </header>
-  )
-}
+import Header from '../components/Header'
 
 function StepCard({ number, title, body }) {
   return (

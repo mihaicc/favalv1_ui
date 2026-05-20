@@ -1,50 +1,8 @@
 import { useEffect, useState, useCallback } from 'react'
-import { useParams, Link, NavLink } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { fetchQuotes, fetchAuthorTraits } from '../api'
 import { toSlug, matchAuthor, parseAssessment } from '../utils'
-
-// ── Icons ──────────────────────────────────────────────────────────────
-function SearchIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="7" />
-      <path d="m20 20-3.5-3.5" />
-    </svg>
-  )
-}
-
-function CompareIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 6h12l-3-3M3 6l3 3" />
-      <path d="M21 18H9l3 3M21 18l-3-3" />
-    </svg>
-  )
-}
-
-// ── Site header ─────────────────────────────────────────────────────────
-function Header() {
-  return (
-    <header className="site">
-      <div className="shell row">
-        <div className="brand">
-          <img className="mark" src="/logo.svg" alt="" />
-          <img className="wordmark" src="/faval-wordmark.svg" alt="Faval.ai" />
-        </div>
-        <nav className="primary">
-          <NavLink to="/" end>Ranking</NavLink>
-          <NavLink to="/quote-stream">Quote Stream</NavLink>
-          <Link to="/donate-suggest">Donate &amp; Suggest</Link>
-          <Link to="/about">About</Link>
-        </nav>
-        <div className="actions">
-          <button className="btn"><CompareIcon /> Compare</button>
-          <button className="icon-btn" aria-label="Search"><SearchIcon /></button>
-        </div>
-      </div>
-    </header>
-  )
-}
+import Header from '../components/Header'
 
 // ── Breadcrumb ─────────────────────────────────────────────────────────
 function Breadcrumb({ authorName }) {
