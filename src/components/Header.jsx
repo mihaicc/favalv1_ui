@@ -23,7 +23,7 @@ export default function Header() {
     <header className="site">
       <div className="shell row">
         <div className="brand">
-          <img className="mark" src="/logo.svg" alt="" />
+          <img className="mark" src="/logo.png" alt="" />
           <img className="wordmark" src="/faval-wordmark.svg" alt="Faval.AI" />
         </div>
         <nav className="primary">
