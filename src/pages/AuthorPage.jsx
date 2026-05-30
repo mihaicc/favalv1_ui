@@ -79,10 +79,7 @@ function Hero({ author, traitData, quotesTotal, loading }) {
         <p className="epithet">
           {loading
             ? <span className="skel w-90" style={{ height: 20, display: 'block' }} />
-            : (traitData?.raw
-                ? traitData.raw.split('\n')[0].replace(/\*\*/g, '').trim() || '—'
-                : '—'
-              )
+            : (traitData?.bio || '—')
           }
         </p>
         <div className="meta">
@@ -299,7 +296,7 @@ export default function AuthorPage() {
       if (name) {
         const traitRow = allTraits.find(t => t.author === name)
         if (traitRow) {
-          setTraitData(parseAssessment(traitRow.assessment))
+          setTraitData({ ...parseAssessment(traitRow.assessment), bio: traitRow.author_bio ?? null })
         }
 
         const authorQuotes = allQuotes.filter(q => q.author === name)

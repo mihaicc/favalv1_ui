@@ -9,42 +9,32 @@ export function matchAuthor(slug, authors) {
 }
 
 /*
- * Parse the assessment text produced by trait-assessor/SKILL.md.
+ * Parse the JSON assessment produced by trait-assessor/SKILL.md.
  *
- * Expected format:
- *   **NEGATIVE TRAITS (VICES)**
- *   traitName (-score) - evidence
- *   ...
- *   **POSITIVE TRAITS (VIRTUES)**
- *   traitName (score) - evidence
- *   ...
- *   **AVERAGE CHARACTER SCORE: -51.0**
+ * Expected shape:
+ *   { negative_traits: [{trait, score, evidence}], positive_traits: [...], average_character_score }
  *
- * Returns { traits: [{name, score}], avgScore, raw }
+ * Returns { traits: [{name, score, rank}], avgScore }
  * sorted by abs(score) desc; top 5 get rank 1-5, rest "NR".
  */
 export function parseAssessment(text) {
-  if (!text) return { traits: [], avgScore: null, raw: text }
+  if (!text) return { traits: [], avgScore: null }
 
-  const traitRe = /^([A-Za-z &]+?)\s*\((-?\d+(?:\.\d+)?)\)\s*-/gm
-  const avgRe   = /AVERAGE CHARACTER SCORE:\s*(-?\d+(?:\.\d+)?)/i
-
-  const traits = []
-  let m
-  while ((m = traitRe.exec(text)) !== null) {
-    traits.push({ name: m[1].trim(), score: parseFloat(m[2]) })
+  let parsed
+  try {
+    parsed = JSON.parse(text)
+  } catch {
+    return { traits: [], avgScore: null }
   }
 
-  // Sort by abs(score) descending
-  traits.sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
+  const all = [
+    ...(parsed.negative_traits ?? []),
+    ...(parsed.positive_traits ?? []),
+  ].map(t => ({ name: t.trait, score: t.score }))
 
-  const ranked = traits.map((t, i) => ({
-    ...t,
-    rank: i < 5 ? String(i + 1) : 'NR',
-  }))
+  all.sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
 
-  const avgMatch = avgRe.exec(text)
-  const avgScore = avgMatch ? parseFloat(avgMatch[1]) : null
+  const traits = all.map((t, i) => ({ ...t, rank: i < 5 ? String(i + 1) : 'NR' }))
 
-  return { traits: ranked, avgScore, raw: text }
+  return { traits, avgScore: parsed.average_character_score ?? null }
 }
