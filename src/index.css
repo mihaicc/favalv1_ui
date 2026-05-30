@@ -262,6 +262,17 @@ nav.primary a.active {
 
 .trait-row:last-child { border-bottom: none; }
 
+.scorecard-meta {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 22px;
+  font-size: 11px;
+  color: var(--ink-3);
+  border-top: 1px solid var(--line-soft);
+  font-family: 'JetBrains Mono', monospace;
+  opacity: 0.7;
+}
+
 .num {
   width: 28px;
   height: 28px;

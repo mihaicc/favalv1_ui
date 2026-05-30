@@ -27,7 +27,11 @@ const SKELETON_ROWS = [
   { n: 'NR', skel: 'w-50', nr: true },
 ]
 
-function TraitScorecard({ traits, avgScore, loading }) {
+function TraitScorecard({ traits, avgScore, assessedAt, assessedBy, loading }) {
+  const dateLabel = assessedAt
+    ? new Date(assessedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    : null
+
   return (
     <aside className="scorecard">
       <div className="card-head">
@@ -65,6 +69,12 @@ function TraitScorecard({ traits, avgScore, loading }) {
             </div>
           ))
       }
+      {!loading && (assessedBy || dateLabel) && (
+        <div className="scorecard-meta">
+          {assessedBy && <span>{assessedBy}</span>}
+          {dateLabel && <span>{dateLabel}</span>}
+        </div>
+      )}
     </aside>
   )
 }
@@ -117,6 +127,8 @@ function Hero({ author, traitData, quotesTotal, loading }) {
       <TraitScorecard
         traits={traitData?.traits ?? []}
         avgScore={traitData?.avgScore ?? null}
+        assessedAt={traitData?.assessedAt ?? null}
+        assessedBy={traitData?.assessedBy ?? null}
         loading={loading}
       />
     </section>
@@ -313,7 +325,12 @@ export default function AuthorPage() {
       if (name) {
         const traitRow = allTraits.find(t => t.author === name)
         if (traitRow) {
-          setTraitData({ ...parseAssessment(traitRow.assessment), bio: traitRow.author_bio ?? null })
+          setTraitData({
+            ...parseAssessment(traitRow.assessment),
+            bio: traitRow.author_bio ?? null,
+            assessedAt: traitRow.assessed_at ?? null,
+            assessedBy: traitRow.assessment_by ?? null,
+          })
         }
 
         const authorQuotes = allQuotes.filter(q => q.author === name)
