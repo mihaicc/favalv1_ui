@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(venv/bin/python3.13 -m pytest api/tests.py -v)"
+      "Bash(venv/bin/python3.13 -m pytest api/tests.py -v)",
+      "Bash(curl -sb /tmp/cj.txt \"http://localhost:8000/admin/api/quote/1/change/\")",
+      "Bash(venv/bin/python3.13 manage.py shell -c ' *)"
     ]
   }
 }

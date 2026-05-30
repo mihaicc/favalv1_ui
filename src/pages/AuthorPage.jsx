@@ -69,6 +69,21 @@ function TraitScorecard({ traits, avgScore, loading }) {
   )
 }
 
+// ── Inline markdown renderer (bold + italic only) ──────────────────────
+function InlineMd({ text }) {
+  const parts = []
+  const re = /\*\*(.+?)\*\*|\*(.+?)\*/g
+  let last = 0, m
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) parts.push(text.slice(last, m.index))
+    if (m[1] != null) parts.push(<strong key={m.index}>{m[1]}</strong>)
+    else parts.push(<em key={m.index}>{m[2]}</em>)
+    last = m.index + m[0].length
+  }
+  if (last < text.length) parts.push(text.slice(last))
+  return <>{parts}</>
+}
+
 // ── Hero ───────────────────────────────────────────────────────────────
 function Hero({ author, traitData, quotesTotal, loading }) {
   return (
@@ -79,7 +94,9 @@ function Hero({ author, traitData, quotesTotal, loading }) {
         <p className="epithet">
           {loading
             ? <span className="skel w-90" style={{ height: 20, display: 'block' }} />
-            : (traitData?.bio || '—')
+            : traitData?.bio
+              ? <InlineMd text={traitData.bio} />
+              : '—'
           }
         </p>
         <div className="meta">

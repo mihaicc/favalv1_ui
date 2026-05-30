@@ -20,9 +20,12 @@ export function matchAuthor(slug, authors) {
 export function parseAssessment(text) {
   if (!text) return { traits: [], avgScore: null }
 
+  // Strip optional ```json ... ``` fences the LLM sometimes adds
+  const stripped = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim()
+
   let parsed
   try {
-    parsed = JSON.parse(text)
+    parsed = JSON.parse(stripped)
   } catch {
     return { traits: [], avgScore: null }
   }
